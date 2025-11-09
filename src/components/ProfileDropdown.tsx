@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -9,33 +8,12 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { User, Settings, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
-
-interface UserProfile {
-  name: string;
-  email: string;
-  avatar: string;
-}
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const ProfileDropdown = () => {
-  const [profile, setProfile] = useState<UserProfile>({
-    name: "Guest User",
-    email: "guest@presetpro.com",
-    avatar: ""
-  });
-
-  useEffect(() => {
-    // Load profile from localStorage
-    const savedProfile = localStorage.getItem('presetpro-profile');
-    if (savedProfile) {
-      try {
-        const parsedProfile = JSON.parse(savedProfile);
-        setProfile(parsedProfile);
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      }
-    }
-  }, []);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const getInitials = (name: string) => {
     return name
@@ -46,14 +24,23 @@ export const ProfileDropdown = () => {
       .slice(0, 2);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={profile.avatar} alt={profile.name} />
+            <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback className="bg-primary text-primary-foreground">
-              {getInitials(profile.name)}
+              {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -61,9 +48,9 @@ export const ProfileDropdown = () => {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <div className="flex items-center justify-start gap-2 p-2">
           <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-medium">{profile.name}</p>
+            <p className="font-medium">{user.name}</p>
             <p className="w-[200px] truncate text-sm text-muted-foreground">
-              {profile.email}
+              {user.email}
             </p>
           </div>
         </div>
@@ -81,7 +68,7 @@ export const ProfileDropdown = () => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>

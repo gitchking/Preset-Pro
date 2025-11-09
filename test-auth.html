@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth System</title>
+</head>
+<body>
+    <h1>Test Authentication System</h1>
+    
+    <h2>Register Test</h2>
+    <button onclick="testRegister()">Test Register</button>
+    
+    <h2>Login Test</h2>
+    <button onclick="testLogin()">Test Login</button>
+    
+    <h2>Check Storage</h2>
+    <button onclick="checkStorage()">Check LocalStorage</button>
+    
+    <div id="output"></div>
+
+    <script>
+        function testRegister() {
+            // Simulate registration
+            const users = JSON.parse(localStorage.getItem('presetpro-users') || '{}');
+            const email = 'test@example.com';
+            
+            if (users[email]) {
+                document.getElementById('output').innerHTML = 'User already exists!';
+                return;
+            }
+            
+            const newUser = {
+                id: Date.now().toString(),
+                name: 'Test User',
+                email: email,
+                password: 'test123',
+                gender: 'male',
+                avatar: '',
+                createdAt: new Date().toISOString()
+            };
+            
+            users[email] = newUser;
+            localStorage.setItem('presetpro-users', JSON.stringify(users));
+            
+            document.getElementById('output').innerHTML = 'Registration successful!';
+        }
+        
+        function testLogin() {
+            const users = JSON.parse(localStorage.getItem('presetpro-users') || '{}');
+            const email = 'test@example.com';
+            const password = 'test123';
+            
+            const user = users[email];
+            if (user && user.password === password) {
+                document.getElementById('output').innerHTML = 'Login successful!';
+            } else {
+                document.getElementById('output').innerHTML = 'Login failed!';
+            }
+        }
+        
+        function checkStorage() {
+            const users = localStorage.getItem('presetpro-users');
+            const currentUser = localStorage.getItem('presetpro-user');
+            
+            document.getElementById('output').innerHTML = `
+                <h3>Stored Users:</h3>
+                <pre>${users || 'None'}</pre>
+                <h3>Current User:</h3>
+                <pre>${currentUser || 'None'}</pre>
+            `;
+        }
+    </script>
+</body>
+</html>

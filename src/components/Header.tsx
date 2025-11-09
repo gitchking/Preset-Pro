@@ -1,10 +1,13 @@
 import { ThemeToggle } from "./ThemeToggle";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { Button } from "./ui/button";
-import { Upload, Zap } from "lucide-react";
+import { Upload, Zap, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Header = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <header className="w-full border-b border-border bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
@@ -23,7 +26,16 @@ export const Header = () => {
             </Button>
           </Link>
           <ThemeToggle />
-          <ProfileDropdown />
+          {!isAuthenticated ? (
+            <Link to="/auth">
+              <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
+                <LogIn className="h-4 w-4" />
+                Login
+              </Button>
+            </Link>
+          ) : (
+            <ProfileDropdown />
+          )}
         </div>
       </div>
     </header>

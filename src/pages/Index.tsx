@@ -5,40 +5,36 @@ import { Button } from "@/components/ui/button";
 import { PresetCard } from "@/components/PresetCard";
 import { Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-
-interface Preset {
-  id: number;
-  name: string;
-  effects: string;
-  preview_url: string;
-  download_url: string;
-  file_type: string;
-  downloads: number;
-  likes: number;
-  created_at: string;
-}
+import { presetStorage, type Preset } from "@/utils/presetStorage";
 
 const Index = () => {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPresets = async () => {
+    const loadPresets = () => {
       try {
-        const response = await fetch('/api/unified-presets');
-        const result = await response.json();
-        
-        if (result.success) {
-          setPresets(result.presets);
-        }
+        const storedPresets = presetStorage.getPresets();
+        setPresets(storedPresets);
       } catch (error) {
-        console.error('Error fetching presets:', error);
+        console.error('Error loading presets:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPresets();
+    loadPresets();
+    
+    // Listen for storage changes (when new presets are added)
+    const handleStorageChange = () => {
+      loadPresets();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   return (

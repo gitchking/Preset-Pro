@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { presetStorage } from "@/utils/presetStorage";
 
 const Submit = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    
     const [formData, setFormData] = useState({
         name: "",
         effects: "",
@@ -48,8 +54,7 @@ const Submit = () => {
                 });
             };
 
-            let previewData = 'https://via.placeholder.com/400x300/8B5CF6/ffffff?text=Preview';
-            let presetData = '';
+            let previewData = '';
             
             // Convert preview file to base64 safely
             if (formData.previewFile) {
@@ -63,63 +68,38 @@ const Submit = () => {
                 }
             }
             
-            // For preset files, we'll just send the filename and handle it differently
-            if (formData.presetFile) {
-                presetData = `preset_${Date.now()}_${formData.presetFile.name}`;
-            }
-            
-            const response = await fetch('/api/unified-presets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: formData.name,
-                    effects: formData.effects,
-                    previewGif: previewData,
-                    downloadLink: formData.downloadLink || '#',
-                    presetFileName: formData.presetFile?.name || 'preset.ffx'
-                }),
+            // Add preset using client-side storage
+            const newPreset = presetStorage.addPreset({
+                name: formData.name,
+                effects: formData.effects,
+                previewGif: previewData,
+                downloadLink: formData.downloadLink || '#',
+                presetFileName: formData.presetFile?.name || 'preset.ffx',
+                author: user?.name || 'Anonymous'
             });
 
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            let result;
-            const responseText = await response.text();
-            console.log('Raw response:', responseText);
-            
-            try {
-                result = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('JSON parse error:', parseError);
-                throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}`);
-            }
-            
-            console.log('Parsed result:', result);
+            console.log('Preset added successfully:', newPreset);
 
-            if (response.ok && result.success) {
-                alert("Preset uploaded successfully! It's now live on the website. Redirecting to homepage...");
-                setFormData({ 
-                    name: "", 
-                    effects: "", 
-                    downloadLink: "",
-                    previewFile: null,
-                    presetFile: null
-                });
-                // Reset file inputs
-                const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
-                fileInputs.forEach(input => input.value = '');
-                
-                // Redirect to homepage after 2 seconds to see the new preset
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-            } else {
-                const errorMessage = result.error || 'Failed to submit preset';
-                console.error('Upload failed:', result);
-                alert(`Upload failed: ${errorMessage}`);
-            }
+            alert("Preset uploaded successfully! It's now live on the website.");
+            
+            // Reset form
+            setFormData({ 
+                name: "", 
+                effects: "", 
+                downloadLink: "",
+                previewFile: null,
+                presetFile: null
+            });
+            
+            // Reset file inputs
+            const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
+            fileInputs.forEach(input => input.value = '');
+            
+            // Redirect to homepage to see the new preset
+            setTimeout(() => {
+                navigate('/');
+            }, 1500);
+
         } catch (error) {
             console.error('Error submitting preset:', error);
             alert(`Failed to submit preset: ${error.message}. Please try again.`);
