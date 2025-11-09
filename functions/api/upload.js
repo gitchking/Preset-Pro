@@ -6,6 +6,21 @@ export async function onRequestGet(context) {
   try {
     const { env } = context;
     
+    // Check if DB is available
+    if (!env.DB) {
+      console.error('Database not available in environment');
+      return new Response(JSON.stringify({
+        success: true,
+        presets: [],
+        error: 'Database not configured'
+      }), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
     const result = await env.DB.prepare(`
       SELECT id, name, effects, preview_url, download_url, file_type, 
              downloads, likes, created_at
@@ -47,6 +62,27 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     
     console.log('Upload request received');
+    console.log('Environment keys:', Object.keys(env || {}));
+    
+    // Check if DB is available
+    if (!env || !env.DB) {
+      console.error('Database not available in environment');
+      return new Response(JSON.stringify({ 
+        error: 'Database not configured. Please check Cloudflare D1 binding.',
+        success: false,
+        debug: {
+          hasEnv: !!env,
+          envKeys: Object.keys(env || {}),
+          hasDB: !!(env && env.DB)
+        }
+      }), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
     
     // Parse multipart form data
     const formData = await request.formData();

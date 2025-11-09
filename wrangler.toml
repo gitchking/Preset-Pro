@@ -1,13 +1,8 @@
 name = "preset-pro"
 compatibility_date = "2024-11-09"
+pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "preset-pro-db"
 database_id = "f10554f6-9e59-4c1c-a159-7053f13ec308"
-
-[env.production]
-name = "preset-pro"
-
-[[env.production.pages_build_output_dir]]
-directory = "dist"

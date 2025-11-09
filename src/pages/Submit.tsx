@@ -35,9 +35,36 @@ const Submit = () => {
                 formDataToSend.append('presetFile', formData.presetFile);
             }
             
-            const response = await fetch('/api/upload', {
+            // For now, let's use a simple approach with the working presets API
+            // Convert files to base64 for JSON submission
+            let previewData = '';
+            let presetData = '';
+            
+            if (formData.previewFile) {
+                const previewBuffer = await formData.previewFile.arrayBuffer();
+                const previewBase64 = btoa(String.fromCharCode(...new Uint8Array(previewBuffer)));
+                previewData = `data:${formData.previewFile.type};base64,${previewBase64}`;
+            }
+            
+            if (formData.presetFile) {
+                const presetBuffer = await formData.presetFile.arrayBuffer();
+                const presetBase64 = btoa(String.fromCharCode(...new Uint8Array(presetBuffer)));
+                presetData = presetBase64;
+            }
+            
+            const response = await fetch('/api/presets', {
                 method: 'POST',
-                body: formDataToSend,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    effects: formData.effects,
+                    previewGif: previewData || 'https://via.placeholder.com/400x300/8B5CF6/ffffff?text=Preview',
+                    downloadLink: formData.downloadLink || '#',
+                    presetFileData: presetData,
+                    presetFileName: formData.presetFile?.name || 'preset.ffx'
+                }),
             });
 
             const result = await response.json();
