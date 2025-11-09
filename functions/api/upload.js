@@ -46,6 +46,8 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     
+    console.log('Upload request received');
+    
     // Parse multipart form data
     const formData = await request.formData();
     
@@ -55,10 +57,35 @@ export async function onRequestPost(context) {
     const previewFile = formData.get('previewFile');
     const presetFile = formData.get('presetFile');
 
+    console.log('Form data parsed:', { 
+      name, 
+      effects, 
+      downloadLink,
+      hasPreviewFile: !!previewFile,
+      hasPresetFile: !!presetFile,
+      previewFileSize: previewFile?.size,
+      presetFileSize: presetFile?.size
+    });
+
     // Validate required fields
     if (!name || !effects) {
       return new Response(JSON.stringify({ 
-        error: 'Name and effects are required' 
+        error: 'Name and effects are required',
+        success: false
+      }), {
+        status: 400,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    // Validate that at least preview file is provided
+    if (!previewFile || previewFile.size === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'Preview file is required',
+        success: false
       }), {
         status: 400,
         headers: { 
@@ -69,14 +96,14 @@ export async function onRequestPost(context) {
     }
 
     let previewUrl = '';
-    let presetDownloadUrl = '';
+    let presetDownloadUrl = downloadLink || '';
 
-    // Handle preview file
+    // Handle preview file - reduce size limit to 5MB for better reliability
     if (previewFile && previewFile.size > 0) {
-      // Check file size (10MB limit)
-      if (previewFile.size > 10 * 1024 * 1024) {
+      if (previewFile.size > 5 * 1024 * 1024) {
         return new Response(JSON.stringify({ 
-          error: 'Preview file too large. Maximum size is 10MB.' 
+          error: 'Preview file too large. Maximum size is 5MB.',
+          success: false
         }), {
           status: 400,
           headers: { 
@@ -86,19 +113,45 @@ export async function onRequestPost(context) {
         });
       }
 
-      // Convert to base64 and store in database (temporary solution)
-      const arrayBuffer = await previewFile.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      const mimeType = previewFile.type || 'image/gif';
-      previewUrl = `data:${mimeType};base64,${base64}`;
+      try {
+        console.log('Processing preview file...');
+        const arrayBuffer = await previewFile.arrayBuffer();
+        
+        // Use a more efficient base64 encoding for smaller files
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binaryString = '';
+        const chunkSize = 8192;
+        
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.slice(i, i + chunkSize);
+          binaryString += String.fromCharCode.apply(null, chunk);
+        }
+        
+        const base64 = btoa(binaryString);
+        const mimeType = previewFile.type || 'image/gif';
+        previewUrl = `data:${mimeType};base64,${base64}`;
+        console.log('Preview file processed successfully');
+      } catch (fileError) {
+        console.error('Error processing preview file:', fileError);
+        return new Response(JSON.stringify({ 
+          error: 'Failed to process preview file: ' + fileError.message,
+          success: false
+        }), {
+          status: 400,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
     }
 
-    // Handle preset file
+    // Handle preset file (optional)
     if (presetFile && presetFile.size > 0) {
-      // Check file size (50MB limit for preset files)
-      if (presetFile.size > 50 * 1024 * 1024) {
+      if (presetFile.size > 25 * 1024 * 1024) { // Reduced to 25MB
         return new Response(JSON.stringify({ 
-          error: 'Preset file too large. Maximum size is 50MB.' 
+          error: 'Preset file too large. Maximum size is 25MB.',
+          success: false
         }), {
           status: 400,
           headers: { 
@@ -108,38 +161,57 @@ export async function onRequestPost(context) {
         });
       }
 
-      // For preset files, we'll create a download endpoint
-      const arrayBuffer = await presetFile.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      
-      // Store file data in database
-      const fileResult = await env.DB.prepare(`
-        INSERT INTO preset_files (filename, content_type, file_data, file_size)
-        VALUES (?, ?, ?, ?)
-      `).bind(
-        presetFile.name,
-        presetFile.type,
-        base64,
-        presetFile.size
-      ).run();
+      try {
+        console.log('Processing preset file...');
+        const arrayBuffer = await presetFile.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binaryString = '';
+        const chunkSize = 8192;
+        
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.slice(i, i + chunkSize);
+          binaryString += String.fromCharCode.apply(null, chunk);
+        }
+        
+        const base64 = btoa(binaryString);
+        
+        // Store file data in database
+        const fileResult = await env.DB.prepare(`
+          INSERT INTO preset_files (filename, content_type, file_data, file_size)
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          presetFile.name,
+          presetFile.type,
+          base64,
+          presetFile.size
+        ).run();
 
-      if (fileResult.success) {
-        presetDownloadUrl = `/api/download/${fileResult.meta.last_row_id}`;
+        if (fileResult.success) {
+          presetDownloadUrl = `/api/download/${fileResult.meta.last_row_id}`;
+          console.log('Preset file stored successfully');
+        }
+      } catch (fileError) {
+        console.error('Error processing preset file:', fileError);
+        // Don't fail the whole upload if preset file fails
+        console.log('Continuing without preset file...');
       }
     }
 
     // Insert preset into database
+    console.log('Inserting preset into database...');
     const result = await env.DB.prepare(`
       INSERT INTO presets (name, effects, preview_url, download_url, file_type, status)
       VALUES (?, ?, ?, ?, ?, ?)
     `).bind(
       name,
       effects,
-      previewUrl || 'https://via.placeholder.com/400x300/8B5CF6/ffffff?text=Preview',
-      presetDownloadUrl || downloadLink,
+      previewUrl,
+      presetDownloadUrl,
       presetFile ? `.${presetFile.name.split('.').pop()}` : '.ffx',
-      'approved' // Auto-approve for now
+      'approved'
     ).run();
+
+    console.log('Database insert result:', result);
 
     if (result.success) {
       return new Response(JSON.stringify({ 
@@ -156,13 +228,15 @@ export async function onRequestPost(context) {
         }
       });
     } else {
-      throw new Error('Failed to insert preset');
+      throw new Error('Database insert failed: ' + JSON.stringify(result));
     }
 
   } catch (error) {
     console.error('Error uploading preset:', error);
     return new Response(JSON.stringify({ 
-      error: 'Failed to upload preset: ' + error.message
+      error: 'Failed to upload preset: ' + error.message,
+      success: false,
+      details: error.stack
     }), {
       status: 500,
       headers: { 

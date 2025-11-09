@@ -41,6 +41,7 @@ const Submit = () => {
             });
 
             const result = await response.json();
+            console.log('Upload response:', result);
 
             if (response.ok && result.success) {
                 alert("Preset uploaded successfully! It's now live on the website.");
@@ -55,11 +56,13 @@ const Submit = () => {
                 const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
                 fileInputs.forEach(input => input.value = '');
             } else {
-                throw new Error(result.error || 'Failed to submit preset');
+                const errorMessage = result.error || 'Failed to submit preset';
+                console.error('Upload failed:', result);
+                alert(`Upload failed: ${errorMessage}`);
             }
         } catch (error) {
             console.error('Error submitting preset:', error);
-            alert("Failed to submit preset. Please try again.");
+            alert(`Failed to submit preset: ${error.message}. Please try again.`);
         } finally {
             setIsSubmitting(false);
         }
@@ -145,7 +148,7 @@ const Submit = () => {
                                             required
                                         />
                                         <p className="text-sm text-muted-foreground">
-                                            Upload a preview file (GIF, MP4, WebM, JPG, PNG - max 10MB)
+                                            Upload a preview file (GIF, MP4, WebM, JPG, PNG - max 5MB)
                                         </p>
                                     </div>
 
@@ -161,7 +164,7 @@ const Submit = () => {
                                             required
                                         />
                                         <p className="text-sm text-muted-foreground">
-                                            Upload your preset file (.ffx, .aep, .mogrt, .zip - max 50MB)
+                                            Upload your preset file (.ffx, .aep, .mogrt, .zip - max 25MB)
                                         </p>
                                     </div>
 
