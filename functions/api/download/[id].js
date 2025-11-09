@@ -31,7 +31,8 @@ export async function onRequestGet(context) {
         'Content-Type': result.content_type || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${result.filename}"`,
         'Content-Length': result.file_size.toString(),
-        'Cache-Control': 'public, max-age=31536000'
+        'Cache-Control': 'public, max-age=31536000',
+        'Access-Control-Allow-Origin': '*'
       }
     });
 

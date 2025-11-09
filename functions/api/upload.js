@@ -1,6 +1,47 @@
-// Simple file storage using base64 encoding in database
-// For production, you'd want to use proper file storage like R2, S3, etc.
+// File upload and preset management API
+// Handles both file uploads and preset retrieval
 
+// Handle GET requests to fetch presets
+export async function onRequestGet(context) {
+  try {
+    const { env } = context;
+    
+    const result = await env.DB.prepare(`
+      SELECT id, name, effects, preview_url, download_url, file_type, 
+             downloads, likes, created_at
+      FROM presets 
+      WHERE status = 'approved'
+      ORDER BY created_at DESC
+      LIMIT 50
+    `).all();
+
+    return new Response(JSON.stringify({
+      success: true,
+      presets: result.results || []
+    }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching presets:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to fetch presets: ' + error.message,
+      success: true,
+      presets: []
+    }), {
+      status: 200,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+}
+
+// Handle POST requests for file uploads
 export async function onRequestPost(context) {
   try {
     const { request, env } = context;

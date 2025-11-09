@@ -8,118 +8,191 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Submit = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    effects: "",
-    previewGif: "",
-    downloadLink: ""
-  });
+    const [formData, setFormData] = useState({
+        name: "",
+        effects: "",
+        downloadLink: "",
+        previewFile: null as File | null,
+        presetFile: null as File | null
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitted preset:", formData);
-    // Here you would typically send the data to your backend
-    alert("Preset submitted successfully!");
-    setFormData({ name: "", effects: "", previewGif: "", downloadLink: "" });
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+        try {
+            // Create FormData for file uploads
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('effects', formData.effects);
+            formDataToSend.append('downloadLink', formData.downloadLink);
+            
+            if (formData.previewFile) {
+                formDataToSend.append('previewFile', formData.previewFile);
+            }
+            if (formData.presetFile) {
+                formDataToSend.append('presetFile', formData.presetFile);
+            }
+            
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formDataToSend,
+            });
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      
-      <main className="flex-1 bg-background">
-        <div className="container mx-auto px-6 py-12">
-          <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-              Submit Your Preset
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Share your amazing After Effects presets with the community. 
-              Help other creators discover new effects and techniques.
-            </p>
-          </div>
+            const result = await response.json();
 
-          <div className="mx-auto max-w-2xl">
-            <Card>
-              <CardHeader>
-                <CardTitle>Preset Details</CardTitle>
-                <CardDescription>
-                  Fill in the information about your After Effects preset
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Preset Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="e.g., Smooth Camera Shake"
-                      required
-                    />
-                  </div>
+            if (response.ok && result.success) {
+                alert("Preset uploaded successfully! It's now live on the website.");
+                setFormData({ 
+                    name: "", 
+                    effects: "", 
+                    downloadLink: "",
+                    previewFile: null,
+                    presetFile: null
+                });
+                // Reset file inputs
+                const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
+                fileInputs.forEach(input => input.value = '');
+            } else {
+                throw new Error(result.error || 'Failed to submit preset');
+            }
+        } catch (error) {
+            console.error('Error submitting preset:', error);
+            alert("Failed to submit preset. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-                  <div className="space-y-2">
-                    <Label htmlFor="effects">Effects Used</Label>
-                    <Textarea
-                      id="effects"
-                      name="effects"
-                      value={formData.effects}
-                      onChange={handleChange}
-                      placeholder="e.g., Transform, Expression, Motion Blur"
-                      className="min-h-[100px]"
-                      required
-                    />
-                  </div>
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData(prev => ({
+            ...prev,
+            [e.target.name]: e.target.value
+        }));
+    };
 
-                  <div className="space-y-2">
-                    <Label htmlFor="previewGif">Preview GIF URL</Label>
-                    <Input
-                      id="previewGif"
-                      name="previewGif"
-                      type="url"
-                      value={formData.previewGif}
-                      onChange={handleChange}
-                      placeholder="https://example.com/preview.gif"
-                      required
-                    />
-                  </div>
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData(prev => ({
+                ...prev,
+                [e.target.name]: file
+            }));
+        }
+    };
 
-                  <div className="space-y-2">
-                    <Label htmlFor="downloadLink">Download Link</Label>
-                    <Input
-                      id="downloadLink"
-                      name="downloadLink"
-                      type="url"
-                      value={formData.downloadLink}
-                      onChange={handleChange}
-                      placeholder="https://example.com/download-link"
-                      required
-                    />
-                  </div>
+    return (
+        <div className="flex min-h-screen flex-col">
+            <Header />
 
-                  <Button type="submit" className="w-full">
-                    Submit Preset
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+            <main className="flex-1 bg-background">
+                <div className="container mx-auto px-6 py-12">
+                    <div className="mb-12 text-center">
+                        <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                            Submit Your Preset
+                        </h1>
+                        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+                            Share your amazing After Effects presets with the community.
+                            Help other creators discover new effects and techniques.
+                        </p>
+                    </div>
+
+                    <div className="mx-auto max-w-2xl">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Preset Details</CardTitle>
+                                <CardDescription>
+                                    Fill in the information about your After Effects preset
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name">Preset Name</Label>
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            placeholder="e.g., Smooth Camera Shake"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="effects">Effects Used</Label>
+                                        <Textarea
+                                            id="effects"
+                                            name="effects"
+                                            value={formData.effects}
+                                            onChange={handleChange}
+                                            placeholder="e.g., Transform, Expression, Motion Blur"
+                                            className="min-h-[100px]"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="previewFile">Preview GIF/Video</Label>
+                                        <Input
+                                            id="previewFile"
+                                            name="previewFile"
+                                            type="file"
+                                            accept=".gif,.mp4,.webm,.jpg,.jpeg,.png"
+                                            onChange={handleFileChange}
+                                            className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                                            required
+                                        />
+                                        <p className="text-sm text-muted-foreground">
+                                            Upload a preview file (GIF, MP4, WebM, JPG, PNG - max 10MB)
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="presetFile">Preset File</Label>
+                                        <Input
+                                            id="presetFile"
+                                            name="presetFile"
+                                            type="file"
+                                            accept=".ffx,.aep,.mogrt,.zip,.rar"
+                                            onChange={handleFileChange}
+                                            className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                                            required
+                                        />
+                                        <p className="text-sm text-muted-foreground">
+                                            Upload your preset file (.ffx, .aep, .mogrt, .zip - max 50MB)
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="downloadLink">Additional Resources (Optional)</Label>
+                                        <Input
+                                            id="downloadLink"
+                                            name="downloadLink"
+                                            type="url"
+                                            value={formData.downloadLink}
+                                            onChange={handleChange}
+                                            placeholder="https://example.com/tutorial-or-resources"
+                                        />
+                                        <p className="text-sm text-muted-foreground">
+                                            Optional: Link to tutorials, documentation, or additional resources
+                                        </p>
+                                    </div>
+
+                                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                        {isSubmitting ? "Submitting..." : "Submit Preset"}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </main>
+
+            <Footer />
         </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
+    );
 };
 
 export default Submit;
