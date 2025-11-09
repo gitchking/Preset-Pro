@@ -22,37 +22,53 @@ const Submit = () => {
         setIsSubmitting(true);
 
         try {
-            // Create FormData for file uploads
-            const formDataToSend = new FormData();
-            formDataToSend.append('name', formData.name);
-            formDataToSend.append('effects', formData.effects);
-            formDataToSend.append('downloadLink', formData.downloadLink);
-            
-            if (formData.previewFile) {
-                formDataToSend.append('previewFile', formData.previewFile);
-            }
-            if (formData.presetFile) {
-                formDataToSend.append('presetFile', formData.presetFile);
+            // Validate file sizes before processing
+            if (formData.previewFile && formData.previewFile.size > 5 * 1024 * 1024) {
+                alert('Preview file is too large. Maximum size is 5MB.');
+                setIsSubmitting(false);
+                return;
             }
             
-            // For now, let's use a simple approach with the working presets API
-            // Convert files to base64 for JSON submission
-            let previewData = '';
+            if (formData.presetFile && formData.presetFile.size > 25 * 1024 * 1024) {
+                alert('Preset file is too large. Maximum size is 25MB.');
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Helper function to safely convert file to base64
+            const fileToBase64 = (file: File): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const result = reader.result as string;
+                        resolve(result);
+                    };
+                    reader.onerror = () => reject(new Error('Failed to read file'));
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            let previewData = 'https://via.placeholder.com/400x300/8B5CF6/ffffff?text=Preview';
             let presetData = '';
             
+            // Convert preview file to base64 safely
             if (formData.previewFile) {
-                const previewBuffer = await formData.previewFile.arrayBuffer();
-                const previewBase64 = btoa(String.fromCharCode(...new Uint8Array(previewBuffer)));
-                previewData = `data:${formData.previewFile.type};base64,${previewBase64}`;
+                try {
+                    previewData = await fileToBase64(formData.previewFile);
+                } catch (error) {
+                    console.error('Error processing preview file:', error);
+                    alert('Failed to process preview file. Please try a smaller file.');
+                    setIsSubmitting(false);
+                    return;
+                }
             }
             
+            // For preset files, we'll just send the filename and handle it differently
             if (formData.presetFile) {
-                const presetBuffer = await formData.presetFile.arrayBuffer();
-                const presetBase64 = btoa(String.fromCharCode(...new Uint8Array(presetBuffer)));
-                presetData = presetBase64;
+                presetData = `preset_${Date.now()}_${formData.presetFile.name}`;
             }
             
-            const response = await fetch('/api/presets', {
+            const response = await fetch('/api/submit-preset', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,15 +76,27 @@ const Submit = () => {
                 body: JSON.stringify({
                     name: formData.name,
                     effects: formData.effects,
-                    previewGif: previewData || 'https://via.placeholder.com/400x300/8B5CF6/ffffff?text=Preview',
+                    previewGif: previewData,
                     downloadLink: formData.downloadLink || '#',
-                    presetFileData: presetData,
                     presetFileName: formData.presetFile?.name || 'preset.ffx'
                 }),
             });
 
-            const result = await response.json();
-            console.log('Upload response:', result);
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            let result;
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+            
+            try {
+                result = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}`);
+            }
+            
+            console.log('Parsed result:', result);
 
             if (response.ok && result.success) {
                 alert("Preset uploaded successfully! It's now live on the website.");
@@ -105,6 +133,16 @@ const Submit = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validate file size
+            const maxSize = e.target.name === 'previewFile' ? 5 * 1024 * 1024 : 25 * 1024 * 1024;
+            const fileType = e.target.name === 'previewFile' ? 'Preview' : 'Preset';
+            
+            if (file.size > maxSize) {
+                alert(`${fileType} file is too large. Maximum size is ${maxSize / 1024 / 1024}MB.`);
+                e.target.value = ''; // Clear the input
+                return;
+            }
+            
             setFormData(prev => ({
                 ...prev,
                 [e.target.name]: file
@@ -177,6 +215,11 @@ const Submit = () => {
                                         <p className="text-sm text-muted-foreground">
                                             Upload a preview file (GIF, MP4, WebM, JPG, PNG - max 5MB)
                                         </p>
+                                        {formData.previewFile && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Selected: {formData.previewFile.name} ({(formData.previewFile.size / 1024 / 1024).toFixed(2)} MB)
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
@@ -193,6 +236,11 @@ const Submit = () => {
                                         <p className="text-sm text-muted-foreground">
                                             Upload your preset file (.ffx, .aep, .mogrt, .zip - max 25MB)
                                         </p>
+                                        {formData.presetFile && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Selected: {formData.presetFile.name} ({(formData.presetFile.size / 1024 / 1024).toFixed(2)} MB)
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
