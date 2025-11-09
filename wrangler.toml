@@ -1,0 +1,8 @@
+name = "preset-pro"
+compatibility_date = "2024-11-09"
+
+[env.production]
+name = "preset-pro"
+
+[[env.production.pages_build_output_dir]]
+directory = "dist"
