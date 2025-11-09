@@ -1,4 +1,5 @@
 import { ThemeToggle } from "./ThemeToggle";
+import { ProfileDropdown } from "./ProfileDropdown";
 import { Button } from "./ui/button";
 import { Upload, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,7 +15,7 @@ export const Header = () => {
           <span className="text-xl font-bold tracking-tight text-foreground">Preset Pro</span>
         </Link>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Link to="/submit">
             <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
               <Upload className="h-4 w-4" />
@@ -22,6 +23,7 @@ export const Header = () => {
             </Button>
           </Link>
           <ThemeToggle />
+          <ProfileDropdown />
         </div>
       </div>
     </header>
