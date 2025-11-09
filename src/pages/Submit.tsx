@@ -68,7 +68,7 @@ const Submit = () => {
                 presetData = `preset_${Date.now()}_${formData.presetFile.name}`;
             }
             
-            const response = await fetch('/api/submit-preset', {
+            const response = await fetch('/api/unified-presets', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ const Submit = () => {
             console.log('Parsed result:', result);
 
             if (response.ok && result.success) {
-                alert("Preset uploaded successfully! It's now live on the website.");
+                alert("Preset uploaded successfully! It's now live on the website. Redirecting to homepage...");
                 setFormData({ 
                     name: "", 
                     effects: "", 
@@ -110,6 +110,11 @@ const Submit = () => {
                 // Reset file inputs
                 const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
                 fileInputs.forEach(input => input.value = '');
+                
+                // Redirect to homepage after 2 seconds to see the new preset
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
             } else {
                 const errorMessage = result.error || 'Failed to submit preset';
                 console.error('Upload failed:', result);

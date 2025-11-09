@@ -25,7 +25,7 @@ const Index = () => {
   useEffect(() => {
     const fetchPresets = async () => {
       try {
-        const response = await fetch('/api/presets');
+        const response = await fetch('/api/unified-presets');
         const result = await response.json();
         
         if (result.success) {
