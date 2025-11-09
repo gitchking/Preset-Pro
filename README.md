@@ -1,73 +1,163 @@
-# Welcome to your Lovable project
+<div align="center">
 
-## Project info
+# ⚡ Preset Pro
 
-**URL**: https://lovable.dev/projects/06d909fb-37eb-48e0-bcfd-48caf145f1f6
+*Discover and share high-quality After Effects presets*
 
-## How can I edit this code?
+[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4.19-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.17-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-There are several ways of editing your application.
+[🚀 Live Demo](https://preset-pro.vercel.app) • [📝 Submit Preset](https://preset-pro.vercel.app/submit) • [🐛 Report Bug](https://github.com/gitchking/Preset-Pro/issues)
 
-**Use Lovable**
+</div>
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/06d909fb-37eb-48e0-bcfd-48caf145f1f6) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🎬 About Preset Pro
 
-**Use your preferred IDE**
+Preset Pro is a modern, community-driven platform for discovering and sharing After Effects presets. No more hunting through YouTube descriptions or dealing with shady download links – everything you need is in one beautiful, organized place.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### ✨ Key Features
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **🎨 Modern UI/UX** - Clean, responsive design with dark theme support
+- **📤 Easy Submission** - Simple form to share your presets with the community
+- **🔍 Smart Discovery** - Find presets by effects, categories, and more
+- **⚡ Lightning Fast** - Built with Vite for optimal performance
+- **📱 Mobile First** - Fully responsive across all devices
+- **🌙 Dark Mode** - Beautiful dark theme with purple accents
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Tech Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+<div align="center">
 
-# Step 3: Install the necessary dependencies.
-npm i
+| Frontend | Styling | Tools | Deployment |
+|----------|---------|-------|------------|
+| React 18 | Tailwind CSS | Vite | Vercel |
+| TypeScript | ShadCN UI | ESLint | GitHub Actions |
+| React Router | Lucide Icons | PostCSS | - |
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+</div>
+
+### 🎨 Design System
+
+- **Fonts**: Inter, Outfit, Ubuntu with system fallbacks
+- **Colors**: Dark theme with purple accents (`hsl(270, 70%, 70%)`)
+- **Components**: ShadCN UI with custom styling
+- **Icons**: Lucide React for consistent iconography
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Git
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/gitchking/Preset-Pro.git
+
+# Navigate to project directory
+cd Preset-Pro
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Available Scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run build:dev    # Build in development mode
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📁 Project Structure
 
-## What technologies are used for this project?
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # ShadCN UI components
+│   ├── Header.tsx      # Navigation header
+│   ├── Footer.tsx      # Site footer
+│   └── ...
+├── pages/              # Route components
+│   ├── Index.tsx       # Home page
+│   ├── Submit.tsx      # Preset submission
+│   ├── Privacy.tsx     # Privacy policy
+│   └── Terms.tsx       # Terms of use
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions
+└── index.css           # Global styles & design tokens
+```
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🎨 Design Philosophy
 
-## How can I deploy this project?
+Preset Pro follows a **minimal, modern design** approach:
 
-Simply open [Lovable](https://lovable.dev/projects/06d909fb-37eb-48e0-bcfd-48caf145f1f6) and click on Share -> Publish.
+- **Clean Typography** - Inter font family for excellent readability
+- **Consistent Spacing** - 8px grid system for perfect alignment
+- **Purposeful Color** - Purple accents on dark backgrounds
+- **Intuitive Navigation** - Clear, accessible user flows
+- **Mobile-First** - Responsive design that works everywhere
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 🤝 Contributing
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+We welcome contributions! Here's how you can help:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### 🐛 Bug Reports
+
+Found a bug? Please [open an issue](https://github.com/gitchking/Preset-Pro/issues) with:
+- Clear description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Screenshots (if applicable)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **ShadCN** for the amazing UI component library
+- **Lucide** for beautiful, consistent icons
+- **Tailwind CSS** for the utility-first CSS framework
+- **Vercel** for seamless deployment
+
+---
+
+<div align="center">
+
+**Made with ⚡ by [gitchking](https://github.com/gitchking)**
+
+[⭐ Star this repo](https://github.com/gitchking/Preset-Pro) • [🐦 Follow on Twitter](https://twitter.com/gitchking) • [💼 LinkedIn](https://linkedin.com/in/gitchking)
+
+</div>
