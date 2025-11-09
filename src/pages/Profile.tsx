@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -6,37 +7,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Save, User } from "lucide-react";
+import { Camera, Save } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserProfile {
   name: string;
   email: string;
   avatar: string;
   bio?: string;
+  gender?: string;
 }
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { user, updateUser, isAuthenticated } = useAuth();
+  
   const [profile, setProfile] = useState<UserProfile>({
-    name: "Guest User",
-    email: "guest@presetpro.com",
+    name: "",
+    email: "",
     avatar: "",
-    bio: ""
+    bio: "",
+    gender: ""
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // Load profile from localStorage
-    const savedProfile = localStorage.getItem('presetpro-profile');
+    // Redirect if not authenticated
+    if (!isAuthenticated || !user) {
+      navigate('/auth');
+      return;
+    }
+
+    // Initialize profile with user data
+    setProfile({
+      name: user.name || "",
+      email: user.email || "",
+      avatar: user.avatar || "",
+      bio: "",
+      gender: user.gender || ""
+    });
+
+    // Load additional profile data from localStorage if exists
+    const savedProfile = localStorage.getItem(`presetpro-profile-${user.email}`);
     if (savedProfile) {
       try {
         const parsedProfile = JSON.parse(savedProfile);
-        setProfile(parsedProfile);
+        setProfile(prev => ({
+          ...prev,
+          ...parsedProfile,
+          // Always use auth context for core user data
+          name: user.name || prev.name,
+          email: user.email || prev.email
+        }));
       } catch (error) {
         console.error('Error loading profile:', error);
       }
     }
-  }, []);
+  }, [user, isAuthenticated, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfile(prev => ({
@@ -76,39 +104,33 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
+    if (!user) return;
+    
     setIsUpdating(true);
 
     try {
-      // If there's a new avatar file, upload it
-      if (avatarFile) {
-        try {
-          const response = await fetch('/api/upload-avatar', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: profile.name,
-              email: profile.email,
-              avatar: profile.avatar,
-              bio: profile.bio
-            }),
-          });
+      // Update user in auth context
+      updateUser({
+        name: profile.name,
+        avatar: profile.avatar
+      });
 
-          const result = await response.json();
-          
-          if (result.success) {
-            // Update profile with server response if needed
-            console.log('Avatar uploaded successfully');
-          }
-        } catch (uploadError) {
-          console.error('Avatar upload failed:', uploadError);
-          // Continue with local storage even if upload fails
-        }
+      // Save extended profile data to localStorage (user-specific)
+      localStorage.setItem(`presetpro-profile-${user.email}`, JSON.stringify({
+        bio: profile.bio,
+        avatar: profile.avatar
+      }));
+
+      // Update the user data in the users storage as well
+      const storedUsers = JSON.parse(localStorage.getItem('presetpro-users') || '{}');
+      if (storedUsers[user.email]) {
+        storedUsers[user.email] = {
+          ...storedUsers[user.email],
+          name: profile.name,
+          avatar: profile.avatar
+        };
+        localStorage.setItem('presetpro-users', JSON.stringify(storedUsers));
       }
-
-      // Save to localStorage
-      localStorage.setItem('presetpro-profile', JSON.stringify(profile));
       
       alert('Profile updated successfully!');
       setAvatarFile(null);
@@ -206,6 +228,22 @@ const Profile = () => {
                       onChange={handleInputChange}
                       placeholder="your.email@example.com"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Input
+                      id="gender"
+                      name="gender"
+                      value={profile.gender || ""}
+                      onChange={handleInputChange}
+                      placeholder="Your gender"
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Gender cannot be changed after registration
+                    </p>
                   </div>
 
                   <div className="space-y-2">

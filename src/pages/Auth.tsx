@@ -57,7 +57,7 @@ const Auth = () => {
         alert('Login successful! Welcome back.');
         navigate('/');
       } else {
-        alert('Login failed. Please check your email and password.\n\nDemo account:\nEmail: demo@presetpro.com\nPassword: demo123');
+        alert('Login failed. Please check your email and password.');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -120,11 +120,6 @@ const Auth = () => {
                 <CardDescription>
                   Sign in to your account or create a new one
                 </CardDescription>
-                <div className="mt-4 p-3 bg-muted rounded-md text-sm">
-                  <p className="font-medium text-foreground mb-1">Demo Account:</p>
-                  <p className="text-muted-foreground">Email: demo@presetpro.com</p>
-                  <p className="text-muted-foreground">Password: demo123</p>
-                </div>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="login" className="w-full">
