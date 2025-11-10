@@ -20,6 +20,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DBTest from "./pages/DBTest";
 import NotFound from "./pages/NotFound";
+import { YouTubePopup } from "@/components/YouTubePopup";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <YouTubePopup />
         <RouterProvider router={router} />
       </TooltipProvider>
     </AuthProvider>

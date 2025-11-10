@@ -33,17 +33,6 @@ export const Header = () => {
         </Link>
         
         <div className="flex items-center gap-3">
-          <a 
-            href="https://www.youtube.com/channel/UCi84fOMGApCB8xzbugtFElw?sub_confirmation=1" 
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
-            <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90 h-8 px-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
-                <path d="M4 4 L22 12 L4 22 Z" fill="currentColor"/>
-              </svg>
-            </Button>
-          </a>
           <Link to="/submit">
             <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90">
               <Upload className="h-4 w-4" />
