@@ -1,5 +1,7 @@
-import { Download, Image as ImageIcon } from "lucide-react";
+import { Download } from "lucide-react";
 import { useState } from "react";
+import { GifPreview } from "./GifPreview";
+import { downloadFile, isDownloadAvailable } from "@/utils/downloadUtils";
 
 interface PresetCardProps {
   name: string;
@@ -7,6 +9,7 @@ interface PresetCardProps {
   previewUrl: string;
   downloadUrl: string;
   fileType?: string;
+  localFileData?: string;
 }
 
 export const PresetCard = ({ 
@@ -14,10 +17,31 @@ export const PresetCard = ({
   effects, 
   previewUrl, 
   downloadUrl, 
-  fileType = ".ffx" 
+  fileType = ".ffx",
+  localFileData
 }: PresetCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!isDownloadAvailable(downloadUrl, localFileData)) {
+      alert('No download file available for this preset.');
+      return;
+    }
+
+    setIsDownloading(true);
+    
+    try {
+      await downloadFile(downloadUrl, name, fileType, localFileData);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert(`Download failed: ${error.message}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div
@@ -27,18 +51,11 @@ export const PresetCard = ({
     >
       {/* Preview Image/GIF */}
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        {!imageError ? (
-          <img
-            src={isHovered ? previewUrl : previewUrl}
-            alt={name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <ImageIcon className="h-12 w-12 text-muted-foreground" />
-          </div>
-        )}
+        <GifPreview
+          src={previewUrl}
+          alt={name}
+          className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+        />
         
         {/* File Type Badge */}
         <div className="absolute right-3 top-3 rounded-md bg-background/90 px-2 py-1 backdrop-blur-sm">
@@ -63,15 +80,23 @@ export const PresetCard = ({
         </div>
 
         {/* Download Button */}
-        <a
-          href={downloadUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-auto flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-foreground transition-all duration-200 hover:bg-accent/90 hover:shadow-lg"
+        <button
+          onClick={handleDownload}
+          disabled={isDownloading || !isDownloadAvailable(downloadUrl, localFileData)}
+          className="mt-auto flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-foreground transition-all duration-200 hover:bg-accent/90 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Download className="h-4 w-4" />
-          Download
-        </a>
+          {isDownloading ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent-foreground border-t-transparent"></div>
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

@@ -2,41 +2,7 @@
 // Uses in-memory storage (resets on deployment, but works for demo)
 
 // Global storage (will persist during the worker's lifetime)
-let globalPresets = [
-  {
-    id: 1,
-    name: "Smooth Camera Shake",
-    effects: "Transform, Expression, Motion Blur",
-    preview_url: "https://via.placeholder.com/400x300/8B5CF6/ffffff?text=Smooth+Camera+Shake",
-    download_url: "#",
-    file_type: ".ffx",
-    downloads: 0,
-    likes: 0,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    name: "Glitch Transition",
-    effects: "Displacement, RGB Split, Noise",
-    preview_url: "https://via.placeholder.com/400x300/06B6D4/ffffff?text=Glitch+Transition",
-    download_url: "#",
-    file_type: ".ffx",
-    downloads: 0,
-    likes: 0,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 3,
-    name: "Text Animator Pro",
-    effects: "Text, Transform, Fade",
-    preview_url: "https://via.placeholder.com/400x300/10B981/ffffff?text=Text+Animator",
-    download_url: "#",
-    file_type: ".aep",
-    downloads: 0,
-    likes: 0,
-    created_at: new Date().toISOString()
-  }
-];
+let globalPresets = [];
 
 // GET - Fetch all presets
 export async function onRequestGet(context) {

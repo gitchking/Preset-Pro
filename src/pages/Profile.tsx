@@ -76,9 +76,9 @@ const Profile = () => {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Avatar file is too large. Maximum size is 2MB.');
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Avatar file is too large. Maximum size is 10MB.');
         return;
       }
 
@@ -178,7 +178,7 @@ const Profile = () => {
               <CardContent className="space-y-6">
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center space-y-4">
-                  <Avatar className="h-24 w-24">
+                  <Avatar className="h-24 w-24 ring-4 ring-primary/20">
                     <AvatarImage src={profile.avatar} alt={profile.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                       {getInitials(profile.name)}
@@ -200,7 +200,7 @@ const Profile = () => {
                       className="hidden"
                     />
                     <p className="text-xs text-muted-foreground">
-                      JPG, PNG, GIF up to 2MB
+                      JPG, PNG, GIF up to 10MB
                     </p>
                   </div>
                 </div>

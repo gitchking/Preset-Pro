@@ -81,6 +81,23 @@ export async function onRequestGet(context) {
   try {
     const { env } = context;
     
+    // Check if DB is available
+    if (!env || !env.DB) {
+      console.error('Database not available in environment');
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Database not configured',
+        presets: []
+      }), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    console.log('Fetching presets from database...');
     const result = await env.DB.prepare(`
       SELECT id, name, effects, preview_url, download_url, file_type, 
              downloads, likes, created_at
@@ -89,10 +106,13 @@ export async function onRequestGet(context) {
       ORDER BY created_at DESC
       LIMIT 50
     `).all();
+    
+    console.log('Database query result:', result);
 
     return new Response(JSON.stringify({
       success: true,
-      presets: result.results || []
+      presets: result.results || [],
+      count: (result.results || []).length
     }), {
       headers: { 
         'Content-Type': 'application/json',
@@ -103,6 +123,7 @@ export async function onRequestGet(context) {
   } catch (error) {
     console.error('Error fetching presets:', error);
     return new Response(JSON.stringify({ 
+      success: false,
       error: 'Failed to fetch presets: ' + error.message,
       presets: []
     }), {

@@ -1,0 +1,26 @@
+# Updated wrangler.toml configuration with R2 bucket
+# Add this to your existing wrangler.toml file
+
+name = "preset-pro"
+compatibility_date = "2024-11-09"
+pages_build_output_dir = "dist"
+
+# Existing D1 database
+[[d1_databases]]
+binding = "DB"
+database_name = "preset-pro-db"
+database_id = "f10554f6-9e59-4c1c-a159-7053f13ec308"
+
+# Add R2 bucket for file storage
+[[r2_buckets]]
+binding = "PRESET_BUCKET"
+bucket_name = "preset-pro-files"
+preview_bucket_name = "preset-pro-files-preview"
+
+# Optional: Environment variables for R2 custom domain
+[vars]
+R2_CUSTOM_DOMAIN = "files.your-domain.com"
+R2_PUBLIC_URL = "https://files.your-domain.com"
+
+# Note: You'll need to create the R2 bucket first:
+# wrangler r2 bucket create preset-pro-files
