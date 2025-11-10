@@ -5,20 +5,19 @@ name = "preset-pro"
 compatibility_date = "2024-11-09"
 pages_build_output_dir = "dist"
 
-# Existing D1 database
-[[d1_databases]]
-binding = "DB"
-database_name = "preset-pro-db"
-database_id = "f10554f6-9e59-4c1c-a159-7053f13ec308"
+# Add nodejs_compat flag for Supabase client
+compatibility_flags = [ "nodejs_compat" ]
 
-# Add R2 bucket for file storage
+# R2 bucket for file storage
 [[r2_buckets]]
 binding = "PRESET_BUCKET"
 bucket_name = "preset-pro-files"
 preview_bucket_name = "preset-pro-files-preview"
 
-# Optional: Environment variables for R2 custom domain
+# Environment variables for Supabase
 [vars]
+SUPABASE_URL = "https://fxyoyhqxuwoqlxyofmbg.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4eW95aHF4dXdvcWx4eW9mbWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NzAwODYsImV4cCI6MjA3ODM0NjA4Nn0.cL-18bnkVMFFLUQtHehQMA04VZDiE2F8O0MCWe0mEBU"
 R2_CUSTOM_DOMAIN = "files.your-domain.com"
 R2_PUBLIC_URL = "https://files.your-domain.com"
 

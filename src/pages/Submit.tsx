@@ -131,6 +131,17 @@ const Submit = () => {
 
             console.log('About to add preset to storage...');
 
+            // Prepare preset data for both local storage and global database
+            let presetData = {
+                name: formData.name.trim(),
+                effects: formData.effects.trim(),
+                previewGif: previewData,
+                downloadLink: '', // Will be set after file upload
+                presetFileName: formData.presetFile?.name || 'preset.ffx',
+                author: user?.name || 'Anonymous',
+                localFileData: undefined as string | undefined
+            };
+
             // Upload preset file to GoFile (no setup required)
             let fileDownloadUrl = formData.downloadLink?.trim() || '#';
             
@@ -177,7 +188,11 @@ const Submit = () => {
                     
                     // For small files, offer to store as base64 fallback
                     if (formData.presetFile.size < 5 * 1024 * 1024) { // Under 5MB
-                        const useLocalStorage = confirm(`⚠️ GoFile upload failed: ${errorMessage}\n\n${suggestion}\n\nWould you like to store the file locally instead? (File will be available for download on this device only)`);
+                        const useLocalStorage = confirm(`⚠️ GoFile upload failed: ${errorMessage}
+
+${suggestion}
+
+Would you like to store the file locally instead? (File will be available for download on this device only)`);
                         
                         if (useLocalStorage) {
                             try {
@@ -202,7 +217,13 @@ const Submit = () => {
                             fileDownloadUrl = formData.downloadLink?.trim() || '#';
                         }
                     } else {
-                        alert(`⚠️ Failed to upload preset file to GoFile:\n\n${errorMessage}\n\n${suggestion}\n\nYou can add a download link manually if needed.`);
+                        alert(`⚠️ Failed to upload preset file to GoFile:
+
+${errorMessage}
+
+${suggestion}
+
+You can add a download link manually if needed.`);
                         fileDownloadUrl = formData.downloadLink?.trim() || '#';
                     }
                 }
@@ -210,67 +231,71 @@ const Submit = () => {
 
             setUploadProgress('Saving preset...');
 
-            // Prepare preset data for both local storage and global database
-            const presetData = {
-                name: formData.name.trim(),
-                effects: formData.effects.trim(),
-                previewGif: previewData,
-                downloadLink: fileDownloadUrl, // Use uploaded file URL if available
-                presetFileName: formData.presetFile?.name || 'preset.ffx',
-                author: user?.name || 'Anonymous'
-            };
+            // Update download link in presetData
+            presetData.downloadLink = fileDownloadUrl;
 
             console.log('Preset data prepared:', presetData);
 
-            // Save to global database first (so all users can see it)
-            let globalSaveSuccess = false;
-            const submitEndpoints = ['/api/submit-preset', '/api/unified-presets'];
+            // Save to D1 database
+            setUploadProgress('Saving to database...');
             
-            for (const endpoint of submitEndpoints) {
-                try {
-                    setUploadProgress(`Saving to community database (${endpoint})...`);
-                    
-                    const apiResponse = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(presetData)
-                    });
-
-                    // Check if response is actually JSON
-                    const contentType = apiResponse.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        console.log(`❌ ${endpoint} returned non-JSON response (API not available)`);
-                        continue;
+            try {
+                console.log('Submitting preset to Supabase database...');
+                
+                // Use the Supabase client directly instead of fetch to avoid CSP issues
+                const { supabase } = await import('@/utils/supabaseClient');
+                
+                // Extract file extension from preset file name if available
+                let fileType = '.ffx'; // Default
+                if (formData.presetFile) {
+                    const parts = formData.presetFile.name.split('.');
+                    if (parts.length > 1) {
+                        fileType = '.' + parts[parts.length - 1].toLowerCase();
                     }
-
-                    const apiResult = await apiResponse.json();
-                    
-                    if (apiResult.success) {
-                        console.log(`✅ Preset saved to global database successfully via ${endpoint}`);
-                        globalSaveSuccess = true;
-                        break;
-                    } else {
-                        console.error(`❌ Failed to save via ${endpoint}:`, apiResult.error);
-                    }
-                } catch (apiError) {
-                    console.error(`❌ ${endpoint} error:`, apiError);
                 }
+                
+                // Prepare preset data
+                const presetData = {
+                    name: formData.name.trim(),
+                    effects: formData.effects.trim(),
+                    preview_url: previewData, // Use previewData instead of formData.previewGif
+                    download_url: fileDownloadUrl,
+                    file_type: fileType,
+                    downloads: 0,
+                    likes: 0,
+                    status: 'approved', // Auto-approve for now
+                    author_name: user?.name || 'Anonymous',
+                    author_email: user?.email || '',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Insert preset into Supabase database
+                const { data, error } = await supabase
+                    .from('presets')
+                    .insert([presetData])
+                    .select();
+                
+                if (error) {
+                    console.error('❌ Failed to save to Supabase database:', error);
+                    throw new Error(error.message || 'Failed to save preset');
+                }
+                
+                console.log('✅ Preset saved to Supabase database successfully!');
+                console.log('New preset data:', data[0]);
+                alert("✅ Preset submitted successfully and is now visible to all users! Redirecting to homepage...");
+
+            } catch (error) {
+                console.error('❌ Supabase database error:', error);
+                
+                // Supabase database not available in local development
+                console.log('❌ Supabase database not available in local development');
+                alert("❌ Failed to submit preset to Supabase database. (Note: In local development, Supabase database might not be available. Deploy to Cloudflare for full functionality.)");
+                setIsSubmitting(false);
+                setUploadProgress('');
+                return;
             }
 
-            // Also save to localStorage as backup
-            setUploadProgress('Saving locally...');
-            const newPreset = presetStorage.addPreset(presetData);
-            console.log('Preset added to local storage:', newPreset);
-
-            // Success message based on save status
-            if (globalSaveSuccess) {
-                alert("✅ Preset uploaded successfully and is now visible to all users! Redirecting to homepage...");
-            } else {
-                alert("✅ Preset saved successfully! It's visible on your device and will sync to other users when the server is available.");
-            }
-            
             // Reset form
             setFormData({ 
                 name: "", 
@@ -330,9 +355,9 @@ const Submit = () => {
             <Header />
 
             <main className="flex-1 bg-background">
-                <div className="container mx-auto px-6 py-12">
-                    <div className="mb-12 text-center">
-                        <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                <div className="container mx-auto px-6 py-8">
+                    <div className="mb-8 text-center">
+                        <h1 className="mb-2 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
                             Submit Your Preset
                         </h1>
                         <p className="mx-auto max-w-2xl text-lg text-muted-foreground">

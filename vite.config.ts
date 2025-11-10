@@ -14,4 +14,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: 'esnext',
+  },
+  // Add CSP configuration for development
+  ...(mode === "development" && {
+    server: {
+      headers: {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' 'unsafe-inline' https:; style-src-elem 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; media-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+      }
+    }
+  })
 }));

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageIcon, Play, Pause } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 
 interface GifPreviewProps {
   src: string;
@@ -10,7 +10,6 @@ interface GifPreviewProps {
 export const GifPreview = ({ src, alt, className = "" }: GifPreviewProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -35,10 +34,6 @@ export const GifPreview = ({ src, alt, className = "" }: GifPreviewProps) => {
     );
   }
 
-  const togglePlayPause = () => {
-    setIsPaused(!isPaused);
-  };
-
   if (hasError) {
     return (
       <div className={`flex items-center justify-center bg-gradient-to-br from-purple-500 to-blue-600 ${className}`}>
@@ -55,14 +50,9 @@ export const GifPreview = ({ src, alt, className = "" }: GifPreviewProps) => {
       <img
         src={src}
         alt={alt}
-        className={`h-full w-full object-cover transition-all duration-300 ${
-          isPaused ? 'filter grayscale' : ''
-        } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`h-full w-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={handleLoad}
         onError={handleError}
-        style={{ 
-          animationPlayState: isPaused ? 'paused' : 'running',
-        }}
       />
       
       {/* Loading state */}
@@ -70,17 +60,6 @@ export const GifPreview = ({ src, alt, className = "" }: GifPreviewProps) => {
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      )}
-      
-      {/* Play/Pause control for GIFs */}
-      {isLoaded && src.includes('data:image/gif') && (
-        <button
-          onClick={togglePlayPause}
-          className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200"
-          title={isPaused ? 'Play GIF' : 'Pause GIF'}
-        >
-          {isPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
-        </button>
       )}
     </div>
   );

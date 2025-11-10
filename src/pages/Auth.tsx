@@ -31,12 +31,15 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [registerError, setRegisterError] = useState("");
 
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoginData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+    setLoginError(""); // Clear error when user types
   };
 
   const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,24 +47,26 @@ const Auth = () => {
       ...prev,
       [e.target.name]: e.target.value
     }));
+    setRegisterError(""); // Clear error when user types
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginError("");
 
     try {
-      const success = await login(loginData.email, loginData.password);
+      const result = await login(loginData.email, loginData.password);
       
-      if (success) {
-        alert('Login successful! Welcome back.');
+      if (result.success) {
+        // Success message will be handled by AuthContext
         navigate('/');
       } else {
-        alert('Login failed. Please check your email and password.');
+        setLoginError(result.error || "Login failed. Please check your email and password.");
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Login failed. Please try again.');
+      setLoginError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -70,38 +75,44 @@ const Auth = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setRegisterError("");
 
     // Validate passwords match
     if (registerData.password !== registerData.confirmPassword) {
-      alert('Passwords do not match.');
+      setRegisterError('Passwords do not match.');
       setIsLoading(false);
       return;
     }
 
     // Validate password strength
     if (registerData.password.length < 6) {
-      alert('Password must be at least 6 characters long.');
+      setRegisterError('Password must be at least 6 characters long.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const success = await register(
+      const result = await register(
         registerData.name,
         registerData.email,
         registerData.password,
         registerData.gender
       );
       
-      if (success) {
-        alert('Registration successful! Welcome to Preset Pro.');
+      if (result.success) {
+        // For Supabase, registration might require email confirmation
+        if (result.error) {
+          alert(`Registration successful! ${result.error}`);
+        } else {
+          alert('Registration successful! Welcome to Preset Pro.');
+        }
         navigate('/');
       } else {
-        alert('Registration failed. User with this email may already exist.');
+        setRegisterError(result.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please check your information and try again.');
+      setRegisterError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -130,6 +141,12 @@ const Auth = () => {
                   
                   <TabsContent value="login" className="space-y-4">
                     <form onSubmit={handleLogin} className="space-y-4">
+                      {loginError && (
+                        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+                          {loginError}
+                        </div>
+                      )}
+                      
                       <div className="space-y-2">
                         <Label htmlFor="login-email">Email</Label>
                         <Input
@@ -180,6 +197,12 @@ const Auth = () => {
                   
                   <TabsContent value="register" className="space-y-4">
                     <form onSubmit={handleRegister} className="space-y-4">
+                      {registerError && (
+                        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+                          {registerError}
+                        </div>
+                      )}
+                      
                       <div className="space-y-2">
                         <Label htmlFor="register-name">Full Name</Label>
                         <Input

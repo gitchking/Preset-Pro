@@ -4,12 +4,27 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { PresetCard } from "@/components/PresetCard";
 import { Link } from "react-router-dom";
-import { type Preset } from "@/utils/presetStorage";
+import { useAuth } from "@/contexts/AuthContext";
+
+// API response data type for D1 database
+interface D1Preset {
+  id: number;
+  name: string;
+  effects: string;
+  preview_url: string;
+  download_url: string;
+  file_type: string;
+  downloads: number;
+  likes: number;
+  created_at: string;
+  author_email?: string;
+}
 
 const Index = () => {
-  const [presets, setPresets] = useState<Preset[]>([]);
+  const [presets, setPresets] = useState<D1Preset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadPresets = async () => {
@@ -17,57 +32,33 @@ const Index = () => {
         setLoading(true);
         setError(null);
         
-        // Import presetStorage
-        const { presetStorage } = await import("@/utils/presetStorage");
+        console.log('🌐 Fetching presets from Supabase database...');
         
-        // Clear any existing presets to ensure clean state
-        presetStorage.clearAllPresets();
+        // For local development, we need to handle CSP restrictions
+        // We'll use the supabase client directly instead of fetch
+        const { supabase } = await import('@/utils/supabaseClient');
         
-        // Try to load from API endpoints
-        const endpoints = ['/api/presets', '/api/unified-presets'];
-        let apiSuccess = false;
+        // Query to get all approved presets ordered by creation date
+        const { data, error } = await supabase
+          .from('presets')
+          .select('id, name, effects, preview_url, download_url, file_type, downloads, likes, created_at, author_email')
+          .eq('status', 'approved')
+          .order('created_at', { ascending: false })
+          .limit(100);
         
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`🌐 Trying to load presets from: ${endpoint}`);
-            const response = await fetch(endpoint);
-            
-            // Check if response is actually JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-              console.log(`❌ ${endpoint} returned non-JSON response (likely 404)`);
-              continue;
-            }
-            
-            const data = await response.json();
-            
-            if (data.success && Array.isArray(data.presets)) {
-              console.log(`✅ Loaded ${data.presets.length} presets from ${endpoint}`);
-              setPresets(data.presets);
-              apiSuccess = true;
-              break;
-            } else if (Array.isArray(data.presets)) {
-              console.log(`⚠️ ${endpoint} returned presets without success flag:`, data.presets.length);
-              setPresets(data.presets);
-              apiSuccess = true;
-              break;
-            } else {
-              console.log(`❌ ${endpoint} failed or returned no presets:`, data);
-            }
-          } catch (endpointError) {
-            console.log(`❌ ${endpoint} error:`, endpointError);
-          }
+        if (error) {
+          console.error('Supabase error:', error);
+          throw new Error(error.message);
         }
         
-        // Only show empty state when APIs fail
-        if (!apiSuccess) {
-          console.log('APIs not available, showing empty state by design');
-          setPresets([]);
-        }
+        console.log(`✅ Loaded ${data ? data.length : 0} presets from Supabase database`);
+        setPresets(data || []);
         
       } catch (error) {
-        console.error('Error loading presets:', error);
-        // Don't show error to user, just show empty state
+        console.error('Error loading presets from Supabase:', error);
+        // Network error - Supabase database not available
+        console.log('❌ Network error - Supabase database not available');
+        setError('Failed to connect to database');
         setPresets([]);
       } finally {
         setLoading(false);
@@ -84,11 +75,11 @@ const Index = () => {
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-6 py-12">
           {loading ? (
-            <div className="text-center py-20">
-              <div className="mb-6 text-6xl">⚡</div>
-              <h2 className="mb-4 text-2xl font-semibold text-foreground">
-                Loading Presets...
-              </h2>
+            <div className="flex justify-center py-20">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-r-2 border-primary" style={{ animationDuration: '0.8s' }}></div>
+                <span className="text-foreground">Loading Presets...</span>
+              </div>
             </div>
           ) : error ? (
             <div className="text-center py-20">
@@ -110,12 +101,12 @@ const Index = () => {
               {presets.map((preset) => (
                 <PresetCard
                   key={preset.id}
+                  id={preset.id}
                   name={preset.name}
-                  effects={preset.effects.split(', ')}
+                  effects={Array.isArray(preset.effects) ? preset.effects : preset.effects.split(', ')}
                   previewUrl={preset.preview_url}
                   downloadUrl={preset.download_url}
                   fileType={preset.file_type}
-                  localFileData={preset.localFileData}
                 />
               ))}
             </div>

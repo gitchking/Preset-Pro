@@ -1,7 +1,4 @@
-interface Env {
-  DB: D1Database;
-}
-
+// Remove D1 database type since we're using Supabase now
 declare global {
-  interface CloudflareEnv extends Env {}
+  interface CloudflareEnv {}
 }
